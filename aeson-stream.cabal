@@ -97,8 +97,11 @@ test-suite aeson-stream-tests
       TypeFamilyDependencies
       ViewPatterns
   ghc-options: -O2 -Wincomplete-uni-patterns
-  build-tools:
-      hspec-discover
+  -- Until https://github.com/input-output-hk/haskell.nix/issues/231 is resolved,
+  -- do not include hspec-discover in system-build-tools. We hack around the issue
+  -- in flake.nix so both cabal and nix build work.
+  -- build-tools:
+  --     hspec-discover
   build-depends:
       aeson
     , aeson-stream

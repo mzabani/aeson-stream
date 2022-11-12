@@ -1,6 +1,10 @@
 {-# LANGUAGE AllowAmbiguousTypes, TypeOperators #-}
 {-# LANGUAGE DataKinds #-}
-module AesonStream where
+module AesonStream
+    ( ToJSONStream(..)
+    , UseToJSONInstance(..)
+    , genericToJSONStream
+    ) where
 
 import           Data.Aeson                     ( ToJSON
                                                 , encode
@@ -60,6 +64,7 @@ instance ToJSON a => ToJSONStream (UseToJSONInstance a) where
 deriving via (UseToJSONInstance Int) instance (ToJSONStream Int)
 deriving via (UseToJSONInstance Float) instance (ToJSONStream Float)
 deriving via (UseToJSONInstance Double) instance (ToJSONStream Double)
+deriving via (UseToJSONInstance Bool) instance (ToJSONStream Bool)
 deriving via (UseToJSONInstance LT.Text) instance (ToJSONStream LT.Text)
 deriving via (UseToJSONInstance T.Text) instance (ToJSONStream T.Text)
 
@@ -68,19 +73,25 @@ instance ToJSONStream a => ToJSONStream (Stream (Of a) IO ()) where
     toJSONStream v =
         S.yield "[" >> S.intersperse "," (S.for v toJSONStream) >> S.yield "]"
 
-data OtherObj = OtherObj
-    { oName :: T.Text
-    }
-    deriving stock Generic
-    deriving anyclass ToJSONStream
+instance ToJSONStream a => ToJSONStream [a] where
+    -- Does this lazily traverse the list?
+    -- TODO: Take advantage of the other instance?
+    toJSONStream v =
+        S.yield "["
+            >> S.intersperse "," (S.for (S.each v) toJSONStream)
+            >> S.yield "]"
+
+instance ToJSONStream a => ToJSONStream (Maybe a) where
+    toJSONStream Nothing  = S.yield "null"
+    toJSONStream (Just v) = toJSONStream v
 
 data TestObject = TestObject
     { age           :: Int
     , streamArray   :: Stream (Of Int) IO ()
-    , field         :: Int
-    , thirdField    :: Int
+    , field         :: [Int]
+    , thirdField    :: Maybe Bool
     , lazyTextField :: LT.Text
-    , otherObj      :: OtherObj
+    , otherObj      :: Maybe TestObject
     }
     deriving stock Generic
     deriving anyclass ToJSONStream
