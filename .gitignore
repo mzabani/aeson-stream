@@ -1,0 +1,8 @@
+.stack-work/
+*~
+local/*
+!local/.gitkeep
+dist-newstyle/
+
+# Nix build outputs
+results/

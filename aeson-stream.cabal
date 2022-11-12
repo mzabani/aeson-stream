@@ -1,0 +1,110 @@
+cabal-version: 2.0
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           aeson-stream
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/mzabani/aeson-stream#readme>
+homepage:       https://github.com/mzabani/aeson-stream#readme
+bug-reports:    https://github.com/mzabani/aeson-stream/issues
+author:         Marcelo Zabani
+maintainer:     mzabani@gmail.com
+copyright:      2021 Marcelo Zabani
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/mzabani/aeson-stream
+
+library
+  exposed-modules:
+      AesonStream
+  other-modules:
+      Paths_aeson_stream
+  hs-source-dirs:
+      src
+  default-extensions:
+      BangPatterns
+      DefaultSignatures
+      DeriveAnyClass
+      DeriveFunctor
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      LambdaCase
+      FlexibleContexts
+      FlexibleInstances
+      GADTs
+      GeneralizedNewtypeDeriving
+      MultiParamTypeClasses
+      NamedFieldPuns
+      OverloadedStrings
+      TypeFamilies
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      TypeFamilyDependencies
+      ViewPatterns
+  ghc-options: -O2 -Wall -Wincomplete-uni-patterns -Wpartial-fields
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , streaming
+    , text
+  default-language: Haskell2010
+
+test-suite aeson-stream-tests
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      AllSpecs
+      MemoryUsageSpec
+      Paths_aeson_stream
+  hs-source-dirs:
+      test
+  default-extensions:
+      BangPatterns
+      DefaultSignatures
+      DeriveAnyClass
+      DeriveFunctor
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      LambdaCase
+      FlexibleContexts
+      FlexibleInstances
+      GADTs
+      GeneralizedNewtypeDeriving
+      MultiParamTypeClasses
+      NamedFieldPuns
+      OverloadedStrings
+      TypeFamilies
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      TypeFamilyDependencies
+      ViewPatterns
+  ghc-options: -O2 -Wincomplete-uni-patterns
+  build-tools:
+      hspec-discover
+  build-depends:
+      aeson
+    , aeson-stream
+    , base >=4.7 && <5
+    , bytestring
+    , hspec
+    , streaming
+    , text
+  default-language: Haskell2010
