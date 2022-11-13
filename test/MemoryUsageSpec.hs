@@ -1,10 +1,17 @@
 module MemoryUsageSpec where
 
 import AesonStream (ToJSONStream(..), UseToJSONInstance(..))
+import AesonValueGen (aesonValueGen)
 import Control.DeepSeq (force, NFData)
-import Data.Aeson (ToJSON(..))
+import Control.Exception (onException, evaluate, SomeException (SomeException), try, catch)
+import Control.Concurrent (newMVar, modifyMVar_, readMVar)
+import Control.Monad (void)
+import Control.Monad.IO.Class (liftIO)
+import Data.Aeson (ToJSON(..), FromJSON)
 import qualified Data.Aeson as Aeson
+import Data.ByteString (ByteString)
 import qualified Data.ByteString.Lazy as LBS
+import Data.Maybe (mapMaybe, catMaybes)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import           Streaming.Prelude              ( Of
@@ -12,13 +19,7 @@ import           Streaming.Prelude              ( Of
                                                 )
 import qualified Streaming.Prelude             as S
 import Test.Hspec (Spec, it, shouldSatisfy, shouldBe, xit)
-import Data.ByteString (ByteString)
-import Control.Exception (onException, evaluate, SomeException (SomeException), try)
-import Data.Maybe (mapMaybe, catMaybes)
-import Control.Exception.Base (catch)
-import Debug.Trace
-import Control.Concurrent (newMVar, modifyMVar_, readMVar)
-import Control.Monad (void)
+import  Test.Hspec.Hedgehog (hedgehog, forAll)
 
 
 data VeryLargeObj m = VeryLargeObj {
@@ -44,8 +45,8 @@ data SillyObject = SillyObject {
     s2 :: Int,
     s3 :: [Int]
 }
-    deriving stock (Generic)
-    deriving anyclass (NFData, ToJSON, ToJSONStream m)
+    deriving stock (Eq, Generic, Show)
+    deriving anyclass (NFData, FromJSON, ToJSON, ToJSONStream m)
 
 spec :: Spec
 spec = do
@@ -77,3 +78,34 @@ spec = do
         fullValue <- S.fold_ @IO (<>) "" id $ toJSONStream i { s3 = [] }
         -- Notice we just need to close the array and the object with the partially evaluated bits
         evaluatedParts <> "]}" `shouldBe` fullValue
+
+    it "Lazily evaluate objects in lists" $ do
+        let i = [1 :: Int, 2, 3, 4, error "Error when evaluating the last value" ]
+        evaluatedChunks <- newMVar @LBS.ByteString ""
+        void $ try @SomeException $ S.foldM_ @IO (\() bs -> do
+                bss <- evaluate $ force bs
+                modifyMVar_ evaluatedChunks (pure . (<> bss))
+                ) (pure ()) pure $ toJSONStream i
+        
+        evaluatedParts <- readMVar evaluatedChunks
+        fullValue <- S.fold_ @IO (<>) "" id $ toJSONStream [1 :: Int, 2, 3, 4, 5]
+
+        -- The comma and the last element are missing. The comma could perhaps be yielded
+        -- in a valid and lazier implementation, but this is lazy enough and if this behaviour
+        -- ever changes we can just change this test.
+        evaluatedParts <> ",5]" `shouldBe` fullValue
+
+    xit "Tuples?" $ putStrLn "TODO"
+
+    it "With arbitrarily generated values, Aeson.decode . toJSONStream is the identity" $ hedgehog $ do
+        jsonVal <- forAll aesonValueGen
+        encodedVal <- S.fold_ (<>) "" id $ toJSONStream jsonVal
+        -- liftIO $ print encodedVal
+        liftIO $ Aeson.decode encodedVal `shouldBe` Just jsonVal
+
+    it "With Generic generated instances, Aeson.decode . toJSONStream is the identity" $ hedgehog $ do
+        -- We only test one type's Generic instance here. This is probably not sufficient.
+        let i = SillyObject False 37 [1,2]
+        encodedVal <- S.fold_ (<>) "" id $ toJSONStream i
+        -- liftIO $ print encodedVal
+        liftIO $ Aeson.decode encodedVal `shouldBe` Just i

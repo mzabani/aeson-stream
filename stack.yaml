@@ -41,6 +41,19 @@ packages:
 #
 # extra-deps:
 
+# extra-deps:
+#   # This is hedgehog-1.2
+#   - git: https://github.com/hedgehogqa/haskell-hedgehog.git
+#     commit: 70cf9fd0719e2d0ace1093cbe75673d7b9b4cf65
+#     # nix-sha256: sha256-M8b3+VYLsSIg6jOeHGPL5ctDKzp9LHhykeZ+5j8ESqE=
+#     subdirs:
+#       - hedgehog
+
+#   # This is hspec-hedgehog-0.0.1.2
+#   - git: https://github.com/parsonsmatt/hspec-hedgehog.git
+#     commit: 9f211dc3f01036bacc79bf1ad4ae4666080d27a1
+#     # nix-sha256: sha256-/GnSYkgWWT3QbuXDocrxR3hixTtMV02+SAvdd42U4T0=
+
 # Override default flag values for local packages and extra-deps
 # flags: {}
 
