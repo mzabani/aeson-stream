@@ -103,9 +103,21 @@ spec = do
         -- liftIO $ print encodedVal
         liftIO $ Aeson.decode encodedVal `shouldBe` Just jsonVal
 
-    it "With Generic generated instances, Aeson.decode . toJSONStream is the identity" $ hedgehog $ do
+    it "With Generic generated instances, Aeson.decode . toJSONStream is the identity" $ do
         -- We only test one type's Generic instance here. This is probably not sufficient.
         let i = SillyObject False 37 [1,2]
-        encodedVal <- S.fold_ (<>) "" id $ toJSONStream i
+        encodedVal <- S.fold_ @IO (<>) "" id $ toJSONStream i
         -- liftIO $ print encodedVal
         liftIO $ Aeson.decode encodedVal `shouldBe` Just i
+
+    it "Streams and lists are encoded the same" $ do
+        let
+            list :: [[[Int]]]
+            list = [ [ [1 :: Int,2],  [3,4,5,6],  []], []]
+            stream :: Stream (Of (Stream (Of (Stream (Of Int) IO ())) IO ())) IO ()
+            stream = S.each [S.each [S.each [1 :: Int,2], S.each [3,4,5,6], S.each []], S.each []]
+        encodedStream <- S.fold_ @IO (<>) "" id $ toJSONStream stream
+        encodedList <- S.fold_ @IO (<>) "" id $ toJSONStream list
+        encodedStream `shouldBe` encodedList
+        Aeson.decode encodedList `shouldBe` Just list
+
